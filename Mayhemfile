@@ -6,3 +6,5 @@ testsuite:
 
 cmds:
     - cmd: /gphoto2 --hook-script=@@
+      env:
+        DISABLE_SMOKETEST: '1'

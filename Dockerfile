@@ -15,7 +15,7 @@ WORKDIR /gphoto2
 RUN autoreconf -is
 ENV CC="afl-clang-fast"
 ENV CXX="afl-clang-fast++"
-RUN ./configure
+RUN ./configure CC="afl-clang-fast" CXX="afl-clang-fast++"
 RUN make -j$(nproc)
 
 ##Prepare all library dependencies for copy
@@ -28,6 +28,9 @@ COPY --from=builder /gphoto2/gphoto2/gphoto2 /gphoto2
 COPY --from=builder /deps /usr/lib
 COPY --from=builder /usr/local/bin/afl-fuzz /afl-fuzz
 
-ENTRYPOINT ["/afl-fuzz", "-i", "/tests", "-o", "/out"]
-CMD ["/gphoto2", "--hook-script=@@"]
+RUN mkdir -p /tests && echo seed > /tests/seed
+ENV AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1
+ENV AFL_SKIP_CPUFREQ=1
+ENTRYPOINT ["/afl-fuzz", "-i", "/tests", "-o", "/out", "--"]
+CMD "/gphoto2 --hook-script= @@"
 

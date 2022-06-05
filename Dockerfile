@@ -1,5 +1,5 @@
 #Build Stage
-FROM --platform=linux/amd64 ubuntu:20.04 as builder
+FROM fuzzers/aflplusplus:3.12c as builder
 
 ##Install Build Dependencies
 RUN apt-get update && \
@@ -13,17 +13,21 @@ WORKDIR /gphoto2
 
 ##Build
 RUN autoreconf -is
+ENV CC="afl-clang-fast"
+ENV CXX="afl-clang-fast++"
 RUN ./configure
 RUN make -j$(nproc)
 
 ##Prepare all library dependencies for copy
 RUN mkdir /deps
 RUN cp `ldd ./gphoto2/gphoto2 | grep so | sed -e '/^[^\t]/ d' | sed -e 's/\t//' | sed -e 's/.*=..//' | sed -e 's/ (0.*)//' | sort | uniq` /deps 2>/dev/null || : 
+RUN cp `ldd /usr/local/bin/afl-fuzz | grep so | sed -e '/^[^\t]/ d' | sed -e 's/\t//' | sed -e 's/.*=..//' | sed -e 's/ (0.*)//' | sort | uniq` /deps 2>/dev/null || : 
 
 FROM --platform=linux/amd64 ubuntu:20.04
 COPY --from=builder /gphoto2/gphoto2/gphoto2 /gphoto2
 COPY --from=builder /deps /usr/lib
-#copy from deps on old system to usrLib on new system
+COPY --from=builder /usr/local/bin/afl-fuzz /afl-fuzz
 
+ENTRYPOINT ["/afl-fuzz", "-i", "/tests", "-o", "/out"]
 CMD ["/gphoto2", "--hook-script=@@"]
 

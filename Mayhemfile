@@ -5,7 +5,7 @@ testsuite:
     - file://corpus
 
 cmds:
-    - cmd: /gphoto2/gphoto2/gphoto2 --camera="Directory Browse" --port=disk:"/camera" --show-exif=1
+    - cmd: /gphoto2 --camera="Directory Browse" --port=disk:"/camera" --show-exif=1
       filepath: /camera/exif.jpg
       env:
         DISABLE_SMOKETEST: '1'
